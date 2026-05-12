@@ -88,8 +88,16 @@ export default function LoginPage() {
       await handlePostLogin(user.uid, user.email);
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
-        setError('Email is already in use.');
-        setMode('login');
+        // Since Email Enumeration Protection might be on, users might end up here even if they have an account.
+        // Try logging them in automatically if the password happens to be correct.
+        try {
+           const user = await loginWithEmail(email, password);
+           await handlePostLogin(user.uid, user.email);
+        } catch (loginErr) {
+           setError('This email is already registered. Please enter your correct password to log in.');
+           setMode('login');
+           setPassword('');
+        }
       } else if (err.code === 'auth/weak-password') {
         setError('Password should be at least 6 characters.');
       } else {
