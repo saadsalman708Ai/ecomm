@@ -1,0 +1,176 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() {
+      // Check if user exists in the users collection and has role == 'admin'
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // ==========================================
+    // USERS COLLECTION
+    // ==========================================
+    match /users/{userId} {
+      function isValidUser(data) {
+        return data.keys().hasAll(['email', 'role']) && 
+               data.email is string && data.email.size() <= 255 &&
+               data.role in ['user', 'admin'];
+      }
+
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      
+      // Create user profile on signup
+      allow create: if isSignedIn() && 
+                    request.auth.uid == userId && 
+                    isValidId(userId) &&
+                    isValidUser(incoming()) &&
+                    // Only admins can spawn other admins directly, normal users spawn as 'user'
+                    (incoming().role == 'user' || isAdmin());
+                    
+      // Update by user or admin
+      allow update: if isSignedIn() && 
+                    (request.auth.uid == userId || isAdmin()) &&
+                    isValidUser(incoming()) &&
+                    incoming().get('createdAt', 0) == existing().get('createdAt', 0) &&
+                    // Users cannot elevate their own role
+                    (incoming().role == existing().role || isAdmin());
+    }
+
+    // ==========================================
+    // CART SUB-COLLECTION
+    // ==========================================
+    match /users/{userId}/cart/{productId} {
+      function isValidCartItem(data) {
+        return data.keys().hasAll(['productId', 'quantity', 'price']) &&
+               data.productId is string && data.productId.size() <= 128 &&
+               data.quantity is number && data.quantity >= 1 &&
+               data.price is number;
+      }
+
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+                    isValidId(productId) &&
+                    isValidCartItem(incoming());
+                    
+      allow update: if isSignedIn() && request.auth.uid == userId &&
+                    isValidCartItem(incoming());
+                    
+      allow delete: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ==========================================
+    // PRODUCTS COLLECTION
+    // ==========================================
+    match /products/{productId} {
+      function isValidProduct(data) {
+        return data.keys().hasAll(['id', 'title', 'price', 'quantity']) &&
+               data.id is string && data.id.size() <= 128 &&
+               data.title is string && data.title.size() <= 200 &&
+               data.price is number && data.price >= 0 &&
+               data.quantity is number && data.quantity >= 0;
+      }
+
+      allow read: if true; // Public read
+      allow create: if isAdmin() && isValidId(productId) && isValidProduct(incoming());
+      
+      // Allow updates to soldCount or stock locally by standard users? 
+      // Actually standard users ordering should be done via a cloud function. Since we are client only,
+      // it is a bit complex. For now, allow admin full updates. If users need to buy, they need to update soldCount.
+      // E-commerce direct field changes by users (decrementing stock) needs strict rules. Let's allow users to increment soldCount/decrease stock if they are creating an order involving this product?
+      // Without CF, it's simpler to allow admin-only edit and we trust the order creation for now.
+      allow update: if isAdmin() || (isSignedIn() && incoming().get('createdAt', 0) == existing().get('createdAt', 0) && incoming().diff(existing()).affectedKeys().hasOnly(['quantity', 'inOrder']));
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // ORDERS COLLECTION
+    // ==========================================
+    match /orders/{orderId} {
+      function isValidOrder(data) {
+        return data.keys().hasAll(['id', 'userId', 'userInfo', 'items', 'totalAmount', 'status']) &&
+               data.id is string && data.id.size() <= 128 &&
+               data.userId is string && data.userId.size() <= 128 &&
+               data.totalAmount is number && data.totalAmount >= 0 &&
+               data.status in ['waiting', 'approved', 'pending', 'completed', 'canceled'];
+      }
+
+      // Users read their own, Admins read all
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can place orders (create)
+      allow create: if isSignedIn() && 
+                    isValidId(orderId) &&
+                    isValidOrder(incoming()) &&
+                    incoming().userId == request.auth.uid &&
+                    incoming().status == 'waiting'; // default start state
+                    
+      // Updates (cancellations by users or admin updates)
+      allow update: if isSignedIn() && isValidOrder(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().get('createdAt', 0) == existing().get('createdAt', 0) &&
+                    (
+                      isAdmin() || // Admins can change status
+                      (request.auth.uid == existing().userId && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt', 'canceledBy']) && incoming().status == 'canceled' && existing().status == 'waiting') // Users can only cancel waiting orders
+                    );
+                    
+      allow delete: if isAdmin() && existing().status == 'completed';
+    }
+
+    // ==========================================
+    // HOMECONFIG COLLECTION
+    // ==========================================
+    match /homeConfig/{configId} {
+      function isValidHomeConfig(data) {
+        return data.keys().hasAll(['id', 'type', 'enabled', 'order', 'config']) &&
+               data.type in ['hero', 'image-slider', 'product-section'] &&
+               data.enabled is bool &&
+               data.order is number;
+      }
+
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidId(configId) && isValidHomeConfig(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // CATEGORIES COLLECTION
+    // ==========================================
+    match /categories/{categoryId} {
+      function isValidCategory(data) {
+        return data.keys().hasAll(['name', 'enabled', 'order']) &&
+               data.name is string && data.name.size() <= 100 &&
+               (data.get('tag', '') is string) &&
+               data.enabled is bool &&
+               data.order is number;
+      }
+
+      allow read: if true;
+      allow create, update: if isAdmin() && isValidId(categoryId) && isValidCategory(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================
+    // CONFIG COLLECTION (for documents like contactConfig)
+    // ==========================================
+    match /config/{configId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+  }
+}

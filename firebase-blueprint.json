@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Store product details.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "price": { "type": "number" },
+        "salePrice": { "type": ["number", "null"] },
+        "salePercent": { "type": ["number", "null"] },
+        "quantity": { "type": "number" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "soldCount": { "type": "number" },
+        "adminNote": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "price", "quantity", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order details.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "roles": { "type": "array" },
+        "userInfo": {
+          "type": "object",
+          "properties": {
+            "fullName": { "type": "string" },
+            "phone": { "type": "string" },
+            "altPhone": { "type": ["string", "null"] },
+            "city": { "type": "string" },
+            "area": { "type": "string" },
+            "address": { "type": "string" },
+            "famousPlace": { "type": ["string", "null"] }
+          }
+        },
+        "items": { "type": "array" },
+        "deliveryCharges": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["waiting", "approved", "pending", "completed", "canceled"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "completedAt": { "type": ["string", "null"] }
+      },
+      "required": ["id", "userId", "userInfo", "items", "totalAmount", "status"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile details.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "savedInfo": { "type": ["object", "null"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "HomeConfig": {
+      "title": "Home Config",
+      "description": "Dynamic homepage sections.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string", "enum": ["hero", "image-slider", "product-section"] },
+        "label": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "order": { "type": "number" },
+        "config": { "type": "object" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "type", "enabled", "order", "config"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product categories.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "tag": { "type": ["string", "null"] },
+        "enabled": { "type": "boolean" },
+        "order": { "type": "number" }
+      },
+      "required": ["name", "enabled", "order"]
+    },
+    "ContactConfig": {
+      "title": "Contact Config",
+      "description": "Store contact details.",
+      "type": "object",
+      "properties": {
+        "whatsapp": { "type": "object" },
+        "facebook": { "type": "object" }
+      }
+    },
+    "CartItem": {
+      "title": "Cart Item",
+      "description": "Item in user cart.",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "title": { "type": "string" },
+        "image": { "type": "string" },
+        "price": { "type": "number" },
+        "salePrice": { "type": ["number", "null"] },
+        "quantity": { "type": "number" },
+        "addedAt": { "type": "string" },
+        "expiresAt": { "type": "string" }
+      },
+      "required": ["productId", "quantity", "price"]
+    }
+  },
+  "firestore": {
+    "products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "List of products."
+    },
+    "orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer orders."
+    },
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles."
+    },
+    "users/{userId}/cart/{productId}": {
+      "schema": { "$ref": "#/entities/CartItem" },
+      "description": "User cart items."
+    },
+    "homeConfig/{configId}": {
+      "schema": { "$ref": "#/entities/HomeConfig" },
+      "description": "Homepage section configurations."
+    },
+    "categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Product categories."
+    },
+    "config/contactConfig": {
+      "schema": { "$ref": "#/entities/ContactConfig" },
+      "description": "Store contact configuration."
+    }
+  }
+}
