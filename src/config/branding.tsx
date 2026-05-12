@@ -8,7 +8,7 @@ import { ShoppingBag } from 'lucide-react';
  */
 
 // 1. Logo Text
-export const LOGO_TEXT = "SHU ECOMM PRO";
+export const LOGO_TEXT = "Buy It";
 
 // 2. Logo Icon (used when SHOW_LOGO_ICON is true)
 export const LogoIcon = () => (
