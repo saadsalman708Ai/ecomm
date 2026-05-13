@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, where, limit, orderBy, onSnapshot, getDocs, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, getDocs, QuerySnapshot, DocumentData } from 'firebase/firestore';
 import { db } from '../../lib/firebase/config';
 import { COLLECTIONS } from '../../lib/firebase/collections';
 import type { Product } from '../../types/product';
+import type { DynamicSortBy } from '../../types/homeSection';
 import { ProductCard } from './ProductCard';
 import { SkeletonList } from '../shared/SkeletonList';
 import { Link } from 'react-router-dom';
@@ -15,9 +16,10 @@ interface Props {
   limitCount?: number;
   isSwiper?: boolean;
   hasBackground?: boolean;
+  sortBy?: DynamicSortBy;
 }
 
-export const DynamicCategoryFeed = React.memo(({ title, category, limitCount, isSwiper, hasBackground }: Props) => {
+export const DynamicCategoryFeed = React.memo(({ title, category, limitCount, isSwiper, hasBackground, sortBy }: Props) => {
   const [products, setProducts] = useState<Product[] | undefined>(undefined);
 
   useEffect(() => {
@@ -26,40 +28,54 @@ export const DynamicCategoryFeed = React.memo(({ title, category, limitCount, is
 
     const setupListener = async () => {
       try {
-        const queryConstraints: any[] = [orderBy('createdAt', 'desc')];
-        if (limitCount && limitCount > 0) {
-          queryConstraints.push(limit(limitCount));
-        }
-
         let q;
         if (category && category.toLowerCase() !== 'all') {
           q = query(
             collection(db, COLLECTIONS.PRODUCTS), 
-            where('tags', 'array-contains', category),
-            ...queryConstraints
+            where('tags', 'array-contains', category)
           );
         } else {
-          q = query(collection(db, COLLECTIONS.PRODUCTS), ...queryConstraints);
+          q = query(collection(db, COLLECTIONS.PRODUCTS));
         }
 
         unsubscribe = onSnapshot(q, { includeMetadataChanges: true }, async (snapshot: any) => {
           if (!isMounted) return;
-          let data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+          let data = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() } as Product));
 
           // Handle fallback if no data found and searching for specific category
           if (data.length === 0 && category && category.toLowerCase() !== 'all') {
              // Fallback isn't perfect for realtime, but doing a one-time fetch for fallback if empty
-             const fallbackQ = query(collection(db, COLLECTIONS.PRODUCTS), orderBy('createdAt', 'desc'), limit(limitCount ? limitCount * 5 : 50));
+             const fallbackQ = query(collection(db, COLLECTIONS.PRODUCTS));
              const fallSnap = await getDocs(fallbackQ);
              let fallData = fallSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
              fallData = fallData.filter(p => p.tags?.some(t => t.toLowerCase() === category.toLowerCase()));
-             if (limitCount && limitCount > 0) {
-               fallData = fallData.slice(0, limitCount);
-             }
              data = fallData;
           }
 
-          data.forEach(p => mutate(`product/${p.id}`, p, false));
+          data.sort((a, b) => {
+            if (sortBy === 'most_sold') {
+              return (b.soldCount || 0) - (a.soldCount || 0);
+            } else if (sortBy === 'oldest') {
+              return (a.createdAt || 0) - (b.createdAt || 0);
+            } else if (sortBy === 'price_low_high') {
+              const priceA = a.salePrice ? a.salePrice : a.price;
+              const priceB = b.salePrice ? b.salePrice : b.price;
+              return priceA - priceB;
+            } else if (sortBy === 'price_high_low') {
+              const priceA = a.salePrice ? a.salePrice : a.price;
+              const priceB = b.salePrice ? b.salePrice : b.price;
+              return priceB - priceA;
+            } else {
+              // latest
+              return (b.createdAt || 0) - (a.createdAt || 0);
+            }
+          });
+
+          if (limitCount && limitCount > 0) {
+            data = data.slice(0, limitCount);
+          }
+
+          data.forEach((p: Product) => mutate(`product/${p.id}`, p, false));
           setProducts(data);
         }, (error) => {
           console.error("Error fetching category feed:", error);
@@ -78,7 +94,7 @@ export const DynamicCategoryFeed = React.memo(({ title, category, limitCount, is
       isMounted = false;
       if (unsubscribe) unsubscribe();
     };
-  }, [category, limitCount]);
+  }, [category, limitCount, sortBy]);
 
   if (products === undefined) {
     return (
@@ -101,7 +117,7 @@ export const DynamicCategoryFeed = React.memo(({ title, category, limitCount, is
       </div>
       
       {isSwiper ? (
-        <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-4 px-4 sm:mx-0 sm:px-1">
+        <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-1">
           {products.map(p => (
              <div key={p.id} className="w-[160px] sm:w-[165px] md:w-[175px] xl:w-[200px] shrink-0 snap-start">
                 <ProductCard product={p} />

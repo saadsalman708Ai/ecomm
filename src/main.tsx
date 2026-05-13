@@ -1,7 +1,9 @@
 import { StrictMode, lazy, Suspense, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter, Routes, Route, Link, useLocation, useNavigationType } from 'react-router-dom';
 import { Navbar } from './components/navbar/Navbar';
+import { Footer } from './components/shared/Footer';
 import { ProtectedRoute } from './middleware';
 import { LocalSearchProvider } from './hooks/useLocalSearch';
 import { Loader2 } from 'lucide-react';
@@ -119,6 +121,7 @@ function localStorageProvider() {
 
 function App() {
   return (
+    <HelmetProvider>
     <BrowserRouter>
       <ScrollToTop />
       <TopProgressBar />
@@ -185,10 +188,12 @@ function App() {
           </Routes>
           </ErrorBoundary>
         </main>
+        <Footer />
       </div>
       </LocalSearchProvider>
       </SWRConfig>
     </BrowserRouter>
+    </HelmetProvider>
   );
 }
 

@@ -9,6 +9,7 @@ import { ProductThumbnails } from '../../../components/product/ProductThumbnails
 import { ProductInfo } from '../../../components/product/ProductInfo';
 import { SimilarProducts } from '../../../components/product/SimilarProducts';
 import { ErrorState } from '../../../components/shared/ErrorState';
+import { SEO } from '../../../components/shared/SEO';
 import useSWR, { mutate } from 'swr';
 
 const fetchProduct = async (id: string) => {
@@ -61,6 +62,11 @@ export default function ProductDetailPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 lg:p-12 flex-1">
+      <SEO 
+        title={product.name} 
+        description={product.description?.substring(0, 160)}
+        keywords={product.tags?.join(", ")}
+      />
       <div className="flex flex-col md:flex-row gap-8 lg:gap-16">
         <div className="w-full md:w-1/2 flex flex-col">
           <ProductMainImage imageUrl={product.images?.[activeImgIndex]} />
@@ -78,4 +84,3 @@ export default function ProductDetailPage() {
     </div>
   );
 }
-

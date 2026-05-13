@@ -7,12 +7,15 @@ export interface BaseHomeSectionConfig {
   showTitle?: boolean;
 }
 
+export type DynamicSortBy = 'most_sold' | 'latest' | 'oldest' | 'price_low_high' | 'price_high_low';
+
 export interface DynamicSectionConfig extends BaseHomeSectionConfig {
   type: 'dynamic';
   category: string;
   limit?: number;
   isSwiper?: boolean;
   hasBackground?: boolean;
+  sortBy?: DynamicSortBy;
 }
 
 export interface ImageSectionConfig extends BaseHomeSectionConfig {

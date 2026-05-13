@@ -7,6 +7,7 @@ import { DynamicCategoryFeed } from '../../components/home/DynamicCategoryFeed';
 import { HeroSectionView } from '../../components/home/HeroSectionView';
 import { ImageBannerView } from '../../components/home/ImageBannerView';
 import { MultiImageBannerView } from '../../components/home/MultiImageBannerView';
+import { SEO } from '../../components/shared/SEO';
 import { LOGO_TEXT } from '../../config/branding';
 
 export default function HomePage() {
@@ -33,6 +34,7 @@ export default function HomePage() {
   if (config === undefined) {
     return (
       <div className="p-4 md:p-8 flex flex-col flex-1 w-full max-w-7xl mx-auto animate-pulse">
+        <SEO title="Home" />
         {/* Skeleton Hero */}
         <div className="w-full h-[60vh] min-h-[400px] bg-gray-200 rounded-3xl mb-10"></div>
         
@@ -65,6 +67,7 @@ export default function HomePage() {
   if (!config || config.sections?.length === 0) {
     return (
       <div className="p-4 md:p-8 flex flex-col flex-1 w-full max-w-7xl mx-auto">
+        <SEO title="Home" />
         <HeroSectionView 
           title={`Welcome to ${LOGO_TEXT}`} 
           subtitle="Explore top quality products with amazing discounts." 
@@ -78,6 +81,7 @@ export default function HomePage() {
 
   return (
     <div className="p-4 md:p-8 flex flex-col flex-1 w-full max-w-7xl mx-auto">
+      <SEO title="Home" />
       {config.sections.map((section, index) => {
         const content = (() => {
           switch (section.type) {
@@ -122,6 +126,7 @@ export default function HomePage() {
                   limitCount={section.limit}
                   isSwiper={section.isSwiper}
                   hasBackground={section.hasBackground}
+                  sortBy={section.sortBy}
                 />
               );
             default:
@@ -136,4 +141,3 @@ export default function HomePage() {
     </div>
   );
 }
-

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../../../../../lib/firebase/config';
 import { COLLECTIONS, DOCUMENTS } from '../../../../../../lib/firebase/collections';
-import type { HomeConfig } from '../../../../../../types/homeSection';
+import type { HomeConfig, DynamicSortBy } from '../../../../../../types/homeSection';
 import { SkeletonCard } from '../../../../../../components/shared/SkeletonCard';
 
 export default function EditDynamicComponentPage() {
@@ -16,6 +16,7 @@ export default function EditDynamicComponentPage() {
   const [limit, setLimit] = useState<number | ''>('');
   const [isSwiper, setIsSwiper] = useState(false);
   const [hasBackground, setHasBackground] = useState(false);
+  const [sortBy, setSortBy] = useState<DynamicSortBy | ''>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -33,6 +34,7 @@ export default function EditDynamicComponentPage() {
              setLimit(sec.limit || '');
              setIsSwiper(sec.isSwiper || false);
              setHasBackground(sec.hasBackground || false);
+             setSortBy(sec.sortBy || '');
           } else {
              message.error('Section not found or wrong type.');
              navigate('/dashboard/edit-home');
@@ -59,6 +61,11 @@ export default function EditDynamicComponentPage() {
                updated.limit = Number(limit);
             } else {
                delete updated.limit;
+            }
+            if (sortBy) {
+               updated.sortBy = sortBy;
+            } else {
+               delete updated.sortBy;
             }
             return updated;
          }
@@ -89,6 +96,10 @@ export default function EditDynamicComponentPage() {
          <div>
             <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
             <div className="h-10 bg-gray-200 rounded w-full"></div>
+         </div>
+         <div>
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+            <div className="h-12 bg-gray-200 rounded w-full"></div>
          </div>
          <div className="flex items-center gap-2">
             <div className="h-5 w-5 bg-gray-200 rounded"></div>
@@ -131,6 +142,22 @@ export default function EditDynamicComponentPage() {
                className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/50"
                placeholder="Leave empty to show all. e.g. 10"
             />
+         </div>
+         
+         <div>
+            <label className="block text-sm font-medium text-foreground-muted mb-1">Sort Items By</label>
+            <select
+               value={sortBy}
+               onChange={e => setSortBy(e.target.value as DynamicSortBy | '')}
+               className="w-full px-4 py-2 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/50 bg-white"
+            >
+               <option value="">Default</option>
+               <option value="most_sold">Most Sold</option>
+               <option value="latest">Latest</option>
+               <option value="oldest">Oldest</option>
+               <option value="price_low_high">Price: Low to High</option>
+               <option value="price_high_low">Price: High to Low</option>
+            </select>
          </div>
 
          <div className="flex flex-col gap-4">
