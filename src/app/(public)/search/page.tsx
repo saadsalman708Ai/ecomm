@@ -7,6 +7,7 @@ import { Product } from '../../../types/product';
 import { ProductCard } from '../../../components/home/ProductCard';
 import { SkeletonList } from '../../../components/shared/SkeletonList';
 import { EmptyState } from '../../../components/shared/EmptyState';
+import { SEO } from '../../../components/shared/SEO';
 import { useInView } from 'react-intersection-observer';
 import { mutate } from 'swr';
 import { useLocalSearch } from '../../../hooks/useLocalSearch';
@@ -288,6 +289,10 @@ export default function SearchPage() {
 
   return (
     <div className="flex flex-col flex-1">
+      <SEO 
+        title={qParam ? `Search: ${qParam}` : categoryParam ? `Category: ${categoryParam}` : "Shop Products"} 
+        description="Search for products, browse categories, and discover top items."
+      />
       {/* Sticky Sort Bar */}
       <div className="bg-white border-b border-border shadow-sm sticky top-[60px] md:top-[68px] z-40 overflow-x-auto hide-scrollbar whitespace-nowrap px-4 py-3 flex gap-6">
          {sorts.map(s => (
