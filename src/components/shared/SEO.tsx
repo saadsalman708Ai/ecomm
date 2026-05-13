@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { LOGO_TEXT } from '../../config/branding';
 
 interface Props {
   title?: string;
@@ -7,7 +8,7 @@ interface Props {
 }
 
 export const SEO = ({ title, description, keywords }: Props) => {
-  const shopName = "OUR UHS E-Comm";
+  const shopName = LOGO_TEXT;
   const author = "saad salman 708";
   
   // Clean title for browser tab
@@ -15,10 +16,10 @@ export const SEO = ({ title, description, keywords }: Props) => {
     ? `${title} - ${shopName}`
     : shopName;
 
-  const defaultKeywords = "saadsalman708, saad salman 708, our uhs e-comm, store, online shopping, ecommerce";
+  const defaultKeywords = `saadsalman708, saad salman 708, ${shopName}, store, online shopping, ecommerce`;
   const finalKeywords = keywords ? `${keywords}, ${defaultKeywords}` : defaultKeywords;
 
-  const finalDescription = description || "Welcome to OUR UHS E-Comm. Developed by saad salman 708.";
+  const finalDescription = description || `Welcome to ${shopName}. Developed by saad salman 708.`;
 
   return (
     <Helmet>
