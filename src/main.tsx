@@ -124,7 +124,7 @@ function App() {
       <TopProgressBar />
       <SWRConfig value={{ provider: localStorageProvider }}>
         <LocalSearchProvider>
-        <div className="flex flex-col min-h-screen bg-background text-foreground font-sans w-full max-w-[100vw]">
+        <div className="flex flex-col min-h-screen bg-background text-foreground font-sans w-full overflow-x-hidden relative">
           <Navbar />
           <main className="flex-1 flex flex-col relative w-full">
             <ErrorBoundary>
