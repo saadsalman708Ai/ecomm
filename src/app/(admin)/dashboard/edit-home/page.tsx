@@ -64,9 +64,10 @@ export default function EditHomePage() {
 
   const handleDelete = (index: number) => {
     if (!config) return;
-    const sects = [...config.sections];
-    sects.splice(index, 1);
-    saveConfig({ ...config, sections: sects });
+    const sect = config.sections[index];
+    if (sect) {
+      navigate(`/dashboard/edit-home/${sect.id}/delete`);
+    }
   };
 
   const handleEdit = (section: HomeSectionConfig) => {

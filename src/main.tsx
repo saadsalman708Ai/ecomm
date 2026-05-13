@@ -47,6 +47,7 @@ const EditDynamicComponentPage = lazy(() => import('./app/(admin)/dashboard/edit
 const EditImageComponentPage = lazy(() => import('./app/(admin)/dashboard/edit-home/image-component/[componentId]/page'));
 const EditMultiImageComponentPage = lazy(() => import('./app/(admin)/dashboard/edit-home/multi-image-component/[componentId]/page'));
 const EditHeroComponentPage = lazy(() => import('./app/(admin)/dashboard/edit-home/hero-component/[componentId]/page'));
+const AdminDeleteHomePageComponent = lazy(() => import('./app/(admin)/dashboard/edit-home/[componentId]/delete/page'));
 
 const SuspenseLoader = () => (
   <div className="flex-1 flex flex-col items-center justify-center p-12 w-full h-full min-h-[50vh]">
@@ -164,6 +165,7 @@ function App() {
                 <Route path="/dashboard/edit-home/image-component/:componentId" element={<Suspense fallback={<AdminSuspenseLoader />}><EditImageComponentPage /></Suspense>} />
                 <Route path="/dashboard/edit-home/multi-image-component/:componentId" element={<Suspense fallback={<AdminSuspenseLoader />}><EditMultiImageComponentPage /></Suspense>} />
                 <Route path="/dashboard/edit-home/hero-component/:componentId" element={<Suspense fallback={<AdminSuspenseLoader />}><EditHeroComponentPage /></Suspense>} />
+                <Route path="/dashboard/edit-home/:componentId/delete" element={<Suspense fallback={<AdminSuspenseLoader />}><AdminDeleteHomePageComponent /></Suspense>} />
               </Route>
               
               {/* Fallback */}
